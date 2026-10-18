@@ -52,7 +52,7 @@
 
 <div class="container">
     <h1>🇨🇳 발음 배틀 킹</h1>
-    <div class="subtitle">원어민 발음 듣기 & 한어병음 발음 평가</div>
+    <div class="subtitle">원어민 발음 듣기 & 자동 연속 발음 평가</div>
 
     <div class="user-setup">
         <input type="text" id="studentName" placeholder="이름(학번)을 입력하세요" />
@@ -69,7 +69,7 @@
         <button class="btn-next" onclick="nextRandomWord()">🎲 다른 문제</button>
     </div>
 
-    <button id="recBtn" class="btn-rec" onclick="toggleRecord()">🎤 녹음 시작 & 발음 평가</button>
+    <button id="recBtn" class="btn-rec" onclick="toggleRecord()">🎤 녹음 시작 (연속 평가 모드)</button>
 
     <div class="feedback-card">
         <div class="feedback-title">🔍 한어병음(Pinyin) 비교 피드백</div>
@@ -99,7 +99,6 @@
 </div>
 
 <script>
-    // 개별 한자/숫자 단위 병음 사전 (한자로 인식된 음성도 한어병음으로 변환)
     const charPinyinMap = {
         "一": "Yī", "二": "Èr", "三": "Sān", "四": "Sì", "五": "Wǔ",
         "六": "Liù", "七": "Qī", "八": "Bā", "九": "Jiǔ", "十": "Shí",
@@ -139,29 +138,38 @@
     ];
 
     let currentIdx = 0;
-    let isRecording = false;
+    let isAutoLoop = false;
     let recognition;
     let rankData = {};
 
-    // 🔊 원어민 듣기 (모바일 완벽 보정)
+    // 🔊 모바일 크롬 오디오 보안 차단 해제형 음성 재생
     function playTTS() {
-        if (!('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-        
+        if (!('speechSynthesis' in window)) {
+            alert("브라우저가 음성 재생을 지원하지 않습니다.");
+            return;
+        }
+
+        window.speechSynthesis.cancel(); // 진행 중인 음성 즉시 초기화
+
         const text = vocabulary[currentIdx].hanzi;
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'zh-CN';
-        u.rate = 0.8;
+        u.rate = 0.75; // 약간 천천히 명확하게
 
         const voices = window.speechSynthesis.getVoices();
         const zhVoice = voices.find(v => v.lang.startsWith('zh') || v.lang.includes('CN'));
         if (zhVoice) u.voice = zhVoice;
 
+        // 크롬 브라우저 오디오 엔진 재활성화 후 발성
+        window.speechSynthesis.resume();
         window.speechSynthesis.speak(u);
     }
 
+    // 크롬 음성엔진 리스트 보정
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
     }
 
     function playFanfareAndClap() {
@@ -201,11 +209,26 @@
         };
 
         recognition.onerror = () => {
-            showResult("-", 0, "❌ 인식 실패! 마이크 권한을 확인해 주세요.", false);
-            stopRecordUI();
+            if (isAutoLoop) {
+                setTimeout(() => { safeStartRecognition(); }, 500);
+            }
         };
 
-        recognition.onend = () => { stopRecordUI(); };
+        recognition.onend = () => { 
+            if (isAutoLoop) {
+                setTimeout(() => { safeStartRecognition(); }, 300);
+            } else {
+                stopRecordUI();
+            }
+        };
+    }
+
+    function safeStartRecognition() {
+        if (!isAutoLoop) return;
+        try {
+            recognition.start();
+            startListeningUI();
+        } catch(e){}
     }
 
     function cleanStr(str) {
@@ -213,7 +236,6 @@
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "");
     }
 
-    // 💡 인식된 한자를 무조건 성조 있는 한어병음으로 강제 변환
     function getPinyin(text) {
         if (!text) return "-";
         if (pinyinMap[text]) return pinyinMap[text];
@@ -249,22 +271,25 @@
             return;
         }
 
-        if (!isRecording) {
-            try { recognition.start(); } catch(e){}
-            isRecording = true;
-            const btn = document.getElementById('recBtn');
-            btn.innerText = "🛑 듣고 있습니다... (말하세요)";
-            btn.classList.add('recording');
+        if (!isAutoLoop) {
+            isAutoLoop = true;
+            safeStartRecognition();
         } else {
+            isAutoLoop = false;
             try { recognition.stop(); } catch(e){}
             stopRecordUI();
         }
     }
 
-    function stopRecordUI() {
-        isRecording = false;
+    function startListeningUI() {
         const btn = document.getElementById('recBtn');
-        btn.innerText = "🎤 녹음 시작 & 발음 평가";
+        btn.innerText = "🛑 연속 평가 진행 중... (클릭 시 정지)";
+        btn.classList.add('recording');
+    }
+
+    function stopRecordUI() {
+        const btn = document.getElementById('recBtn');
+        btn.innerText = "🎤 녹음 시작 (연속 평가 모드)";
         btn.classList.remove('recording');
     }
 
@@ -273,22 +298,26 @@
         const targetHanzi = targetItem.hanzi;
         const targetPinyin = targetItem.pinyin;
         
-        // 인식 결과를 한어병음 알파벳으로 변환
         const userPinyin = getPinyin(spokenHanzi);
 
         const targetClean = cleanStr(targetPinyin);
         const userClean = cleanStr(userPinyin);
 
-        // '키(ki)' 발음 등 오독 방지
         const isWrongKAudio = userClean.includes("ki") || userClean.includes("ky") || spokenHanzi.toLowerCase().includes("ki");
 
         if (!isWrongKAudio && (spokenHanzi === targetHanzi || targetClean === userClean)) {
-            showResult(userPinyin, 100, "🎉 완벽합니다! 정확한 발음입니다.", true);
+            showResult(userPinyin, 100, "🎉 완벽합니다! 1.5초 후 다음 문제로 넘어갑니다.", true);
         } else if (!isWrongKAudio && (targetClean.includes(userClean) || userClean.includes(targetClean))) {
-            showResult(userPinyin, 70, `⚠️ 비슷함! [${userPinyin}] 성조나 음소를 확인해 보세요.`, true);
+            showResult(userPinyin, 70, `⚠️ 비슷함! [${userPinyin}] 1.5초 후 다음 문제로 넘어갑니다.`, true);
         } else {
-            showResult(userPinyin, 0, `❌ 발음 오독! 목표: [${targetPinyin}] / 인식: [${userPinyin}]`, false);
+            showResult(userPinyin, 0, `❌ 발음 오독! [${userPinyin}] 1.5초 후 다음 문제로 넘어갑니다.`, false);
         }
+
+        setTimeout(() => {
+            if (isAutoLoop) {
+                nextRandomWord();
+            }
+        }, 1500);
     }
 
     function showResult(userPinyinText, score, msg, isSuccess) {
