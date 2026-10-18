@@ -3,89 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇨🇳 중국어 발음 낙하 스피드 배틀</title>
+    <title>🇨🇳 중국어 한어병음 발음 배틀</title>
     <style>
         :root { --main-color: #ff4757; --bg-color: #f1f2f6; }
         body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; display: flex; justify-content: center; }
         .container { background: white; width: 100%; max-width: 480px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         h1 { color: var(--main-color); margin-bottom: 5px; font-size: 24px; }
-        .subtitle { color: #747d8c; font-size: 14px; margin-bottom: 10px; }
-        
-        /* ⏱️ 상단 2분 타이머 및 점수판 메인 헤더 */
-        .game-header { display: flex; justify-content: space-between; align-items: center; background: #ffeaa7; border: 3px solid #fdcb6e; border-radius: 15px; padding: 12px 20px; font-size: 20px; font-weight: bold; color: #2d3436; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .timer-val { color: #d63031; font-size: 24px; }
-        .score-val { color: #0984e3; font-size: 24px; }
+        .subtitle { color: #747d8c; font-size: 14px; margin-bottom: 15px; }
 
         .user-setup { display: flex; gap: 8px; margin-bottom: 15px; }
         input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
         
-        /* 🎮 단어 낙하 게임 스테이지 */
-        .game-stage { position: relative; width: 100%; height: 260px; background: #2d3436; border-radius: 15px; overflow: hidden; border: 3px solid #636e72; margin-bottom: 15px; }
-        
-        .falling-card { position: absolute; left: 50%; transform: translateX(-50%); background: #ffffff; border: 3px solid #ff4757; border-radius: 12px; padding: 10px 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.1s linear; }
-        .falling-card.hit { animation: popOut 0.4s forwards; border-color: #2ed573; background: #e8fae8; }
-        .falling-hanzi { font-size: 36px; font-weight: bold; color: #2d3436; }
-        .falling-pinyin { font-size: 18px; color: #ff4757; font-weight: bold; }
-        .falling-meaning { font-size: 14px; color: #636e72; }
+        .card { background: #fff0f1; border: 2px solid #ffccd0; border-radius: 15px; padding: 20px; margin-bottom: 15px; }
+        .word-hanzi { font-size: 44px; font-weight: bold; color: #2f3542; margin-bottom: 5px; }
+        .word-pinyin { font-size: 22px; color: #ff4757; font-weight: bold; }
+        .word-meaning { font-size: 16px; color: #a4b0be; margin-top: 5px; }
 
-        .btn-rec { background-color: var(--main-color); color: white; width: 100%; font-size: 18px; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        button { border: none; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-listen { background-color: #70a1ff; color: white; }
+        .btn-next { background-color: #a4b0be; color: white; }
+        
+        .btn-rec { background-color: var(--main-color); color: white; width: 100%; font-size: 18px; padding: 15px; border-radius: 10px; }
         .btn-rec.recording { background-color: #2ed573; animation: blink 1s infinite; }
 
-        .feedback-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-top: 15px; text-align: left; }
+        .feedback-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: left; }
+        .feedback-title { font-size: 14px; font-weight: bold; color: #475569; margin-bottom: 10px; text-align: center; }
         .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
-        .compare-box { background: #f8fafc; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; }
-        .compare-label { font-size: 11px; color: #64748b; }
-        .compare-val { font-size: 18px; font-weight: bold; color: #0f172a; }
+        .compare-box { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .compare-box.user { background: #f0fdf4; border-color: #86efac; }
+        .compare-box.wrong { background: #fef2f2; border-color: #fca5a5; }
+        .compare-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+        .compare-val { font-size: 20px; font-weight: bold; color: #0f172a; word-break: break-all; }
+        .score-badge { font-size: 22px; font-weight: bold; text-align: center; margin-top: 10px; }
+        .feedback-msg { font-size: 13px; text-align: center; margin-top: 5px; font-weight: 500; }
 
-        .leaderboard { background: #ffffff; border: 1px solid #eccc68; border-radius: 12px; padding: 15px; text-align: left; margin-top: 15px; }
+        .leaderboard { background: #ffffff; border: 1px solid #eccc68; border-radius: 12px; padding: 15px; text-align: left; }
         .leaderboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .leaderboard h3 { margin: 0; color: #ffa502; font-size: 16px; }
-        .rank-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; }
+        .rank-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; }
         .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #f1f2f6; font-size: 14px; }
         .rank-item:nth-child(1) { font-weight: bold; color: #ffa502; background: #fffaf0; border-radius: 6px; }
 
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        @keyframes popOut { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.3); } 100% { transform: translateX(-50%) scale(0); opacity: 0; } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🇨🇳 발음 배틀 킹</h1>
-    <div class="subtitle">2분 스피드 단어 맞히기 게임</div>
-
-    <!-- ⏱️ 상단 2분 타이머 UI -->
-    <div class="game-header">
-        <div>⏱️ <span class="timer-val" id="timerDisplay">02:00</span></div>
-        <div>🏆 <span class="score-val" id="scoreDisplay">0점</span></div>
-    </div>
+    <div class="subtitle">원어민 발음 듣기 & 한어병음 발음 평가</div>
 
     <div class="user-setup">
         <input type="text" id="studentName" placeholder="이름(학번)을 입력하세요" />
     </div>
 
-    <div class="game-stage" id="stage">
-        <div class="falling-card" id="fallingCard" style="top: -150px;">
-            <div class="falling-hanzi" id="displayHanzi">一月</div>
-            <div class="falling-pinyin" id="displayPinyin">Yī yuè</div>
-            <div class="falling-meaning" id="displayMeaning">1월</div>
-        </div>
+    <div class="card">
+        <div class="word-hanzi" id="displayHanzi">一月</div>
+        <div class="word-pinyin" id="displayPinyin">Yī yuè</div>
+        <div class="word-meaning" id="displayMeaning">1월</div>
     </div>
 
-    <button id="recBtn" class="btn-rec" onclick="toggleGame()">🎮 2분 게임 시작!</button>
+    <div class="btn-group">
+        <button class="btn-listen" id="listenBtn" onclick="playTTS()">🔊 원어민 듣기</button>
+        <button class="btn-next" onclick="nextRandomWord()">🎲 다른 문제</button>
+    </div>
+
+    <button id="recBtn" class="btn-rec" onclick="toggleRecord()">🎤 녹음 시작 & 발음 평가</button>
 
     <div class="feedback-card">
+        <div class="feedback-title">🔍 한어병음(Pinyin) 비교 피드백</div>
         <div class="compare-grid">
             <div class="compare-box">
                 <div class="compare-label">목표 병음</div>
                 <div class="compare-val" id="targetPinyinBox">Yī yuè</div>
             </div>
-            <div class="compare-box">
+            <div class="compare-box" id="userResultBox">
                 <div class="compare-label">인식된 병음</div>
                 <div class="compare-val" id="userPinyinBox">-</div>
             </div>
         </div>
-        <div id="feedbackText" style="font-size:13px; text-align:center; margin-top:6px; font-weight:bold;"></div>
+        <div id="scoreDisplay" class="score-badge"></div>
+        <div id="feedbackText" class="feedback-msg"></div>
     </div>
 
     <div class="leaderboard">
@@ -100,10 +99,13 @@
 </div>
 
 <script>
+    // 개별 한자/숫자 단위 병음 사전 (한자로 인식된 음성도 한어병음으로 변환)
     const charPinyinMap = {
         "一": "Yī", "二": "Èr", "三": "Sān", "四": "Sì", "五": "Wǔ",
         "六": "Liù", "七": "Qī", "八": "Bā", "九": "Jiǔ", "十": "Shí",
-        "月": "yuè", "星": "Xīng", "期": "qī", "日": "rì"
+        "月": "yuè", "星": "Xīng", "期": "qī", "日": "rì",
+        "1": "Yī", "2": "Èr", "3": "Sān", "4": "Sì", "5": "Wǔ",
+        "6": "Liù", "7": "Qī", "8": "Bā", "9": "Jiǔ", "10": "Shí"
     };
 
     const pinyinMap = {
@@ -137,14 +139,30 @@
     ];
 
     let currentIdx = 0;
-    let isGameRunning = false;
-    let currentScore = 0;
-    let timeLeft = 120; // 2분 (120초)
-    let timerInterval = null;
-    let fallInterval = null;
-    let posY = -120;
+    let isRecording = false;
     let recognition;
     let rankData = {};
+
+    // 🔊 원어민 듣기 (모바일 완벽 보정)
+    function playTTS() {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        
+        const text = vocabulary[currentIdx].hanzi;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-CN';
+        u.rate = 0.8;
+
+        const voices = window.speechSynthesis.getVoices();
+        const zhVoice = voices.find(v => v.lang.startsWith('zh') || v.lang.includes('CN'));
+        if (zhVoice) u.voice = zhVoice;
+
+        window.speechSynthesis.speak(u);
+    }
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+    }
 
     function playFanfareAndClap() {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -171,9 +189,7 @@
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    function initRecognition() {
-        if (!SpeechRecognition) return;
-        
+    if (SpeechRecognition) {
         recognition = new SpeechRecognition();
         recognition.lang = 'zh-CN';
         recognition.continuous = false;
@@ -185,113 +201,11 @@
         };
 
         recognition.onerror = () => {
-            if (isGameRunning) setTimeout(() => { restartRecognition(); }, 150);
+            showResult("-", 0, "❌ 인식 실패! 마이크 권한을 확인해 주세요.", false);
+            stopRecordUI();
         };
 
-        recognition.onend = () => {
-            if (isGameRunning) setTimeout(() => { restartRecognition(); }, 150);
-        };
-    }
-
-    function restartRecognition() {
-        if (!isGameRunning) return;
-        try { if (recognition) recognition.abort(); } catch(e){}
-        try {
-            initRecognition();
-            recognition.start();
-        } catch(e){}
-    }
-
-    initRecognition();
-
-    function toggleGame() {
-        const nameInput = document.getElementById('studentName').value.trim();
-        if (!nameInput) {
-            alert("이름(학번)을 먼저 입력해주세요!");
-            return;
-        }
-
-        if (!isGameRunning) {
-            isGameRunning = true;
-            currentScore = 0;
-            timeLeft = 120; // 2분 초기화
-            document.getElementById('scoreDisplay').innerText = "0점";
-            document.getElementById('recBtn').innerText = "🛑 게임 진행 중... (클릭 시 정지)";
-            document.getElementById('recBtn').classList.add('recording');
-            
-            startTimer();
-            spawnNewWord();
-            restartRecognition();
-        } else {
-            stopGame();
-        }
-    }
-
-    // 게임 및 문제 완전 정지
-    function stopGame() {
-        isGameRunning = false;
-        clearInterval(timerInterval);
-        clearInterval(fallInterval);
-        try { if(recognition) recognition.abort(); } catch(e){}
-        
-        document.getElementById('recBtn').innerText = "🎮 2분 게임 시작!";
-        document.getElementById('recBtn').classList.remove('recording');
-    }
-
-    // ⏱️ 2분 카운트다운 타이머
-    function startTimer() {
-        updateTimerDisplay();
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            updateTimerDisplay();
-            
-            // 2분 경과 시 문제 낙하 및 게임 완전히 중단
-            if (timeLeft <= 0) {
-                stopGame();
-                document.getElementById('timerDisplay').innerText = "00:00";
-                document.getElementById('feedbackText').innerText = "⏰ 2분 제한시간 종료! 최종 랭킹을 확인해보세요!";
-                document.getElementById('feedbackText').style.color = "#d63031";
-                playFanfareAndClap();
-            }
-        }, 1000);
-    }
-
-    function updateTimerDisplay() {
-        const min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-        const sec = String(timeLeft % 60).padStart(2, '0');
-        document.getElementById('timerDisplay').innerText = `${min}:${sec}`;
-    }
-
-    function spawnNewWord() {
-        if (!isGameRunning) return;
-        
-        currentIdx = Math.floor(Math.random() * vocabulary.length);
-        const item = vocabulary[currentIdx];
-        
-        document.getElementById('displayHanzi').innerText = item.hanzi;
-        document.getElementById('displayPinyin').innerText = item.pinyin;
-        document.getElementById('displayMeaning').innerText = item.meaning;
-        document.getElementById('targetPinyinBox').innerText = item.pinyin;
-        document.getElementById('userPinyinBox').innerText = "-";
-
-        const card = document.getElementById('fallingCard');
-        card.classList.remove('hit');
-        posY = -120;
-        card.style.top = posY + "px";
-
-        clearInterval(fallInterval);
-        fallInterval = setInterval(() => {
-            if (!isGameRunning) return;
-            posY += 2;
-            card.style.top = posY + "px";
-
-            if (posY > 180) {
-                document.getElementById('feedbackText').innerText = "💥 단어가 놓쳐 지나갔습니다!";
-                document.getElementById('feedbackText').style.color = "#e74c3c";
-                spawnNewWord();
-            }
-        }, 50);
+        recognition.onend = () => { stopRecordUI(); };
     }
 
     function cleanStr(str) {
@@ -299,9 +213,11 @@
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "");
     }
 
+    // 💡 인식된 한자를 무조건 성조 있는 한어병음으로 강제 변환
     function getPinyin(text) {
         if (!text) return "-";
         if (pinyinMap[text]) return pinyinMap[text];
+        
         let result = "";
         for (let char of text) {
             result += (charPinyinMap[char] || char) + " ";
@@ -309,51 +225,86 @@
         return result.trim();
     }
 
-    function evaluatePronunciation(spokenHanzi) {
-        if (!isGameRunning) return;
+    function renderWord() {
+        const item = vocabulary[currentIdx];
+        document.getElementById('displayHanzi').innerText = item.hanzi;
+        document.getElementById('displayPinyin').innerText = item.pinyin;
+        document.getElementById('displayMeaning').innerText = item.meaning;
+        document.getElementById('targetPinyinBox').innerText = item.pinyin;
+        document.getElementById('userPinyinBox').innerText = "-";
+        document.getElementById('userResultBox').className = "compare-box";
+        document.getElementById('scoreDisplay').innerText = '';
+        document.getElementById('feedbackText').innerText = '';
+    }
 
+    function nextRandomWord() {
+        currentIdx = Math.floor(Math.random() * vocabulary.length);
+        renderWord();
+    }
+
+    function toggleRecord() {
+        const nameInput = document.getElementById('studentName').value.trim();
+        if (!nameInput) {
+            alert("이름(학번)을 먼저 입력해주세요!");
+            return;
+        }
+
+        if (!isRecording) {
+            try { recognition.start(); } catch(e){}
+            isRecording = true;
+            const btn = document.getElementById('recBtn');
+            btn.innerText = "🛑 듣고 있습니다... (말하세요)";
+            btn.classList.add('recording');
+        } else {
+            try { recognition.stop(); } catch(e){}
+            stopRecordUI();
+        }
+    }
+
+    function stopRecordUI() {
+        isRecording = false;
+        const btn = document.getElementById('recBtn');
+        btn.innerText = "🎤 녹음 시작 & 발음 평가";
+        btn.classList.remove('recording');
+    }
+
+    function evaluatePronunciation(spokenHanzi) {
         const targetItem = vocabulary[currentIdx];
         const targetHanzi = targetItem.hanzi;
         const targetPinyin = targetItem.pinyin;
+        
+        // 인식 결과를 한어병음 알파벳으로 변환
         const userPinyin = getPinyin(spokenHanzi);
 
         const targetClean = cleanStr(targetPinyin);
         const userClean = cleanStr(userPinyin);
 
-        document.getElementById('userPinyinBox').innerText = userPinyin;
-
+        // '키(ki)' 발음 등 오독 방지
         const isWrongKAudio = userClean.includes("ki") || userClean.includes("ky") || spokenHanzi.toLowerCase().includes("ki");
 
         if (!isWrongKAudio && (spokenHanzi === targetHanzi || targetClean === userClean)) {
-            currentScore += 100;
-            document.getElementById('scoreDisplay').innerText = `${currentScore}점`;
-            document.getElementById('feedbackText').innerText = "🎉 정확한 발음! 정답!";
-            document.getElementById('feedbackText').style.color = "#27ae60";
-
-            const card = document.getElementById('fallingCard');
-            card.classList.add('hit');
-            clearInterval(fallInterval);
-            
-            updateRanking(currentScore);
-
-            setTimeout(() => {
-                if (isGameRunning) {
-                    spawnNewWord();
-                    restartRecognition();
-                }
-            }, 300);
+            showResult(userPinyin, 100, "🎉 완벽합니다! 정확한 발음입니다.", true);
+        } else if (!isWrongKAudio && (targetClean.includes(userClean) || userClean.includes(targetClean))) {
+            showResult(userPinyin, 70, `⚠️ 비슷함! [${userPinyin}] 성조나 음소를 확인해 보세요.`, true);
         } else {
-            document.getElementById('feedbackText').innerText = `❌ 오독! [${userPinyin}] 정확히 발음해보세요!`;
-            document.getElementById('feedbackText').style.color = "#e74c3c";
-            restartRecognition();
+            showResult(userPinyin, 0, `❌ 발음 오독! 목표: [${targetPinyin}] / 인식: [${userPinyin}]`, false);
         }
+    }
+
+    function showResult(userPinyinText, score, msg, isSuccess) {
+        document.getElementById('userPinyinBox').innerText = userPinyinText;
+        const userBox = document.getElementById('userResultBox');
+        userBox.className = isSuccess ? "compare-box user" : "compare-box wrong";
+        document.getElementById('scoreDisplay').innerText = `+${score}점`;
+        document.getElementById('scoreDisplay').style.color = isSuccess ? '#27ae60' : '#e74c3c';
+        document.getElementById('feedbackText').innerText = msg;
+        if (score > 0) updateRanking(score);
     }
 
     function updateRanking(score) {
         const name = document.getElementById('studentName').value.trim();
-        if (!rankData[name] || score > rankData[name]) {
-            rankData[name] = score;
-        }
+        if (!rankData[name]) rankData[name] = 0;
+        rankData[name] += score;
         const sorted = Object.entries(rankData).sort((a, b) => b[1] - a[1]);
         const listEl = document.getElementById('rankList');
         listEl.innerHTML = '';
@@ -364,6 +315,8 @@
             listEl.appendChild(li);
         });
     }
+
+    renderWord();
 </script>
 </body>
 </html>
