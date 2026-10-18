@@ -46,7 +46,7 @@
 
 <div class="container">
     <h1>🇨🇳 발음 배틀 킹</h1>
-    <div class="subtitle">한어병음 실시간 비교 피드백</div>
+    <div class="subtitle">한어병음 실시간 피드백 모드</div>
 
     <div class="user-setup">
         <input type="text" id="studentName" placeholder="이름(학번)을 입력하세요" />
@@ -63,7 +63,7 @@
         <button class="btn-next" onclick="nextRandomWord()">🎲 다른 문제</button>
     </div>
 
-    <button id="recBtn" class="btn-rec" onclick="toggleRecord()">🎤 녹음 시작 & 발음 평가</button>
+    <button id="recBtn" class="btn-rec" onclick="toggleRecord()">🎤 녹음 시작 (연속 평가 모드)</button>
 
     <div class="feedback-card">
         <div class="feedback-title">🔍 한어병음(Pinyin) 비교 피드백</div>
@@ -92,9 +92,18 @@
     </div>
 </div>
 
-<audio id="ttsAudio" style="display:none;"></audio>
-
 <script>
+    // 개별 한자/숫자 단위 병음 변환 사전
+    const charPinyinMap = {
+        "一": "Yī", "二": "Èr", "三": "Sān", "四": "Sì", "五": "Wǔ",
+        "六": "Liù", "七": "Qī", "八": "Bā", "九": "Jiǔ", "十": "Shí",
+        "月": "yuè", "星": "Xīng", "期": "qī", "日": "rì",
+        "1": "Yī", "2": "Èr", "3": "Sān", "4": "Sì", "5": "Wǔ",
+        "6": "Liù", "7": "Qī", "8": "Bā", "9": "Jiǔ", "10": "Shí",
+        "11": "Shí yī", "12": "Shí èr"
+    };
+
+    // 전체 단어 및 예외 오독 표현 병음 맵
     const pinyinMap = {
         "一月": "Yī yuè", "二月": "Èr yuè", "三月": "Sān yuè", "四月": "Sì yuè",
         "五月": "Wǔ yuè", "六月": "Liù yuè", "七月": "Qī yuè", "八月": "Bā yuè",
@@ -103,7 +112,7 @@
         "星期四": "Xīngqī sì", "星期五": "Xīngqī wǔ", "星期六": "Xīngqī liù", "星期日": "Xīngqī rì",
         "1月": "Yī yuè", "2月": "Èr yuè", "3月": "Sān yuè", "4月": "Sì yuè", "5月": "Wǔ yuè",
         "6月": "Liù yuè", "7月": "Qī yuè", "8月": "Bā yuè", "9月": "Jiǔ yuè", "10月": "Shí yuè",
-        "11月": "Shí yī yuè", "12月": "Shí èr yuè", "西月": "Xī yuè", "是月": "Shì yuè"
+        "11月": "Shí yī yuè", "12月": "Shí èr yuè", "西月": "Xī yuè", "是月": "Shì yuè", "师月": "Shī yuè"
     };
 
     const vocabulary = [
@@ -134,20 +143,22 @@
     let rankData = {};
 
     function playTTS() {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
         const text = vocabulary[currentIdx].hanzi;
-        const audio = document.getElementById('ttsAudio');
-        const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=zh-CN&client=tw-ob`;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-CN';
+        u.rate = 0.8;
 
-        audio.src = googleUrl;
-        audio.play().catch(() => {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = 'zh-CN';
-                u.rate = 0.8;
-                window.speechSynthesis.speak(u);
-            }
-        });
+        const voices = window.speechSynthesis.getVoices();
+        const zhVoice = voices.find(v => v.lang.startsWith('zh') || v.lang.includes('CN'));
+        if (zhVoice) u.voice = zhVoice;
+
+        window.speechSynthesis.speak(u);
+    }
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
     }
 
     function playFanfareAndClap() {
@@ -187,11 +198,18 @@
         };
 
         recognition.onerror = () => {
-            showResult("-", 0, "❌ 인식 실패! 마이크 권한을 확인해 주세요.", false);
-            stopRecordUI();
+            if (isRecording) {
+                setTimeout(() => { try { recognition.start(); } catch(e){} }, 1000);
+            }
         };
 
-        recognition.onend = () => { stopRecordUI(); };
+        recognition.onend = () => { 
+            if (isRecording) {
+                startListeningUI();
+            } else {
+                stopRecordUI();
+            }
+        };
     }
 
     function cleanStr(str) {
@@ -199,11 +217,21 @@
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "");
     }
 
-    // ✅ 버그가 완전히 수정된 getPinyin 함수
+    // 💡 한자/숫자를 한어병음으로 강제 변환해 주는 함수
     function getPinyin(text) {
         if (!text) return "-";
         if (pinyinMap[text]) return pinyinMap[text];
-        return text;
+        
+        // 사전에 없는 복합 표현인 경우 글자별로 정밀 변환
+        let result = "";
+        for (let char of text) {
+            if (charPinyinMap[char]) {
+                result += charPinyinMap[char] + " ";
+            } else {
+                result += char + " ";
+            }
+        }
+        return result.trim();
     }
 
     function renderWord() {
@@ -221,6 +249,9 @@
     function nextRandomWord() {
         currentIdx = Math.floor(Math.random() * vocabulary.length);
         renderWord();
+        if (isRecording) {
+            try { recognition.start(); } catch(e){}
+        }
     }
 
     function toggleRecord() {
@@ -231,21 +262,25 @@
         }
 
         if (!isRecording) {
-            recognition.start();
             isRecording = true;
-            const btn = document.getElementById('recBtn');
-            btn.innerText = "🛑 듣고 있습니다... (말하세요)";
-            btn.classList.add('recording');
+            startListeningUI();
+            try { recognition.start(); } catch(e){}
         } else {
-            recognition.stop();
+            isRecording = false;
+            try { recognition.stop(); } catch(e){}
             stopRecordUI();
         }
     }
 
-    function stopRecordUI() {
-        isRecording = false;
+    function startListeningUI() {
         const btn = document.getElementById('recBtn');
-        btn.innerText = "🎤 녹음 시작 & 발음 평가";
+        btn.innerText = "🛑 연속 녹음 중... (클릭 시 정지)";
+        btn.classList.add('recording');
+    }
+
+    function stopRecordUI() {
+        const btn = document.getElementById('recBtn');
+        btn.innerText = "🎤 녹음 시작 (연속 평가 모드)";
         btn.classList.remove('recording');
     }
 
@@ -259,12 +294,18 @@
         const userClean = cleanStr(userPinyin);
 
         if (spokenHanzi === targetHanzi || targetClean === userClean || userPinyin === targetPinyin) {
-            showResult(userPinyin, 100, "🎉 완벽합니다! 정확한 발음입니다.", true);
+            showResult(userPinyin, 100, "🎉 완벽합니다! 다음 문제 준비 중...", true);
         } else if (targetClean.includes(userClean) || userClean.includes(targetClean)) {
-            showResult(userPinyin, 70, `⚠️ 비슷함! [${userPinyin}] 성조나 음소를 확인해 보세요.`, true);
+            showResult(userPinyin, 70, `⚠️ 비슷함! [${userPinyin}] 다음 문제 준비 중...`, true);
         } else {
             showResult(userPinyin, 0, `❌ 발음 오독! 목표: [${targetPinyin}] / 인식: [${userPinyin}]`, false);
         }
+
+        setTimeout(() => {
+            if (isRecording) {
+                nextRandomWord();
+            }
+        }, 1500);
     }
 
     function showResult(userPinyinText, score, msg, isSuccess) {
