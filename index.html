@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇨🇳 중국어 발음 배틀 킹 (병음 비교 모드)</title>
+    <title>🇨🇳 중국어 발음 배틀 킹 (엄격한 평가 모드)</title>
     <style>
         :root { --main-color: #ff4757; --bg-color: #f1f2f6; }
         body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; display: flex; justify-content: center; }
@@ -32,10 +32,14 @@
         .compare-val { font-size: 20px; font-weight: bold; color: #0f172a; word-break: break-all; }
         .score-badge { font-size: 22px; font-weight: bold; text-align: center; margin-top: 10px; }
         .feedback-msg { font-size: 13px; text-align: center; margin-top: 5px; font-weight: 500; }
+        
         .leaderboard { background: #ffffff; border: 1px solid #eccc68; border-radius: 12px; padding: 15px; text-align: left; }
-        .leaderboard h3 { margin: 0 0 10px 0; color: #ffa502; font-size: 16px; display: flex; justify-content: space-between; }
+        .leaderboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .leaderboard h3 { margin: 0; color: #ffa502; font-size: 16px; }
+        .btn-fanfare { background: #ffa502; color: white; padding: 6px 12px; font-size: 13px; border-radius: 6px; }
         .rank-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; }
         .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #f1f2f6; font-size: 14px; }
+        .rank-item:nth-child(1) { font-weight: bold; color: #ffa502; background: #fffaf0; border-radius: 6px; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -43,7 +47,7 @@
 
 <div class="container">
     <h1>🇨🇳 발음 배틀 킹</h1>
-    <div class="subtitle">한어병음 실시간 피드백 모드</div>
+    <div class="subtitle">엄격한 한어병음 일치 평가 모드</div>
 
     <div class="user-setup">
         <input type="text" id="studentName" placeholder="이름(학번)을 입력하세요" />
@@ -79,7 +83,10 @@
     </div>
 
     <div class="leaderboard">
-        <h3>🏆 학급 실시간 랭킹</h3>
+        <div class="leaderboard-header">
+            <h3>🏆 학급 실시간 랭킹</h3>
+            <button class="btn-fanfare" onclick="playFanfareAndClap()">🎉 팡파레 시상</button>
+        </div>
         <ul class="rank-list" id="rankList">
             <li class="rank-item"><span>-</span><span>0점</span></li>
         </ul>
@@ -89,19 +96,18 @@
 <audio id="ttsAudio" style="display:none;"></audio>
 
 <script>
-    // 한자 -> 병음 변환 사전 (19개 핵심 단어 및 주요 오독 한자 대응)
+    // 한자/숫자 -> 병음 정교 변환 테이블
     const pinyinMap = {
         "一月": "Yī yuè", "二月": "Èr yuè", "三月": "Sān yuè", "四月": "Sì yuè",
         "五月": "Wǔ yuè", "六月": "Liù yuè", "七月": "Qī yuè", "八月": "Bā yuè",
         "九月": "Jiǔ yuè", "十月": "Shí yuè", "十一月": "Shí yī yuè", "十二月": "Shí èr yuè",
         "星期一": "Xīngqī yī", "星期二": "Xīngqī èr", "星期三": "Xīngqī sān",
         "星期四": "Xīngqī sì", "星期五": "Xīngqī wǔ", "星期六": "Xīngqī liù", "星期日": "Xīngqī rì",
-        // 자주 오인식되는 유사 한자 매핑
+        // 자주 잘못 입력되는 음소 변환 사전
+        "西月": "Xī yuè", "是月": "Shì yuè", "实月": "Shí yuè", "师月": "Shī yuè",
         "1月": "Yī yuè", "2月": "Èr yuè", "3月": "Sān yuè", "4月": "Sì yuè", "5月": "Wǔ yuè",
         "6月": "Liù yuè", "7月": "Qī yuè", "8月": "Bā yuè", "9月": "Jiǔ yuè", "10月": "Shí yuè",
-        "11月": "Shí yī yuè", "12月": "Shí èr yuè", "西月": "Xī yuè", "是月": "Shì yuè",
-        "礼拜一": "Xīngqī yī", "礼拜二": "Xīngqī èr", "礼拜三": "Xīngqī sān", "礼拜四": "Xīngqī sì",
-        "礼拜五": "Xīngqī wǔ", "礼拜六": "Xīngqī liù", "礼拜日": "Xīngqī rì"
+        "11月": "Shí yī yuè", "12月": "Shí èr yuè"
     };
 
     const vocabulary = [
@@ -131,19 +137,52 @@
     let recognition;
     let rankData = {};
 
-    // 한자를 병음으로 변환하는 함수 (대소문자/공백 정규화)
+    function playFanfareAndClap() {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [
+            { f: 261.63, dur: 0.15, time: 0 },
+            { f: 329.63, dur: 0.15, time: 0.15 },
+            { f: 392.00, dur: 0.15, time: 0.30 },
+            { f: 523.25, dur: 0.60, time: 0.45 }
+        ];
+
+        notes.forEach(note => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = note.f;
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime + note.time);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + note.time + note.dur);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + note.time);
+            osc.stop(audioCtx.currentTime + note.time + note.dur);
+        });
+
+        const bufferSize = audioCtx.sampleRate * 2.0;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() < 0.05) ? (Math.random() * 2 - 1) * 0.8 : (Math.random() * 2 - 1) * 0.05;
+        }
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        noiseGain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.6);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2.0);
+
+        noise.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        noise.start(audioCtx.currentTime + 0.3);
+    }
+
     function getPinyin(text) {
         if (!text) return "-";
         if (pinyinMap[text]) return pinyinMap[text];
-        
-        // 숫자 포함 패턴 변환
-        let normalized = text
-            .replace(/12/g, "十二").replace(/11/g, "十一").replace(/10/g, "十")
-            .replace(/1/g, "一").replace(/2/g, "二").replace(/3/g, "三")
-            .replace(/4/g, "四").replace(/5/g, "五").replace(/6/g, "六")
-            .replace(/7/g, "七").replace(/8/g, "八").replace(/9/g, "九");
-            
-        return pinyinMap[normalized] || normalized;
+        return text;
     }
 
     function playTTS() {
@@ -167,25 +206,22 @@
     if (SpeechRecognition) {
         recognition = new SpeechRecognition();
         recognition.lang = 'zh-CN';
-        recognition.continuous = true;
+        // 문맥 보정을 최소화하기 위해 단발성 처리
+        recognition.continuous = false;
         recognition.interimResults = false;
 
         recognition.onresult = (event) => {
-            const rawSpoken = event.results[event.results.length - 1][0].transcript.replace(/\s+/g, '');
+            const rawSpoken = event.results[0][0].transcript.replace(/\s+/g, '');
             evaluatePronunciation(rawSpoken);
         };
 
         recognition.onerror = () => {
-            showResult("-", 0, "❌ 인식 실패! 마이크 권한을 확인하고 크게 말씀하세요.", false);
+            showResult("-", 0, "❌ 발음 인식 실패! 더 명확하게 발음해주세요.", false);
             stopRecordUI();
         };
 
         recognition.onend = () => { 
-            if (isRecording) {
-                recognition.start();
-            } else {
-                stopRecordUI();
-            }
+            stopRecordUI();
         };
     }
 
@@ -194,8 +230,6 @@
         document.getElementById('displayHanzi').innerText = item.hanzi;
         document.getElementById('displayPinyin').innerText = item.pinyin;
         document.getElementById('displayMeaning').innerText = item.meaning;
-        
-        // 목표 발음 상자에 병음 표시
         document.getElementById('targetPinyinBox').innerText = item.pinyin;
         document.getElementById('userPinyinBox').innerText = "-";
         document.getElementById('userResultBox').className = "compare-box";
@@ -234,35 +268,25 @@
         btn.classList.remove('recording');
     }
 
+    // 엄격한 평가 판정 함수
     function evaluatePronunciation(spokenHanzi) {
         const targetHanzi = vocabulary[currentIdx].hanzi;
         const targetPinyin = vocabulary[currentIdx].pinyin;
         const userPinyin = getPinyin(spokenHanzi);
 
-        // 단순 공백/대소문자 무시 비교
-        const cleanTarget = targetPinyin.toLowerCase().replace(/\s+/g, '');
-        const cleanUser = userPinyin.toLowerCase().replace(/\s+/g, '');
-
-        if (spokenHanzi === targetHanzi || cleanUser === cleanTarget) {
-            showResult(userPinyin, 100, "🎉 완벽합니다! 정확한 병음 발음입니다.", true);
-        } else if (cleanUser.includes(cleanTarget) || cleanTarget.includes(cleanUser)) {
-            showResult(userPinyin, 70, `⚠️ 유사함! 성조나 자음/모음을 점검해보세요.`, true);
+        // 완전 엄격 일치 판단 (한자 및 병음)
+        if (spokenHanzi === targetHanzi && userPinyin === targetPinyin) {
+            showResult(userPinyin, 100, "🎉 완벽합니다! 성조와 음소가 모두 정확합니다.", true);
         } else {
-            showResult(userPinyin, 0, `💡 목표 병음 [${targetPinyin}]과 인식 병음 [${userPinyin}] 차이를 확인하세요.`, false);
+            // 발음이나 성조가 하나라도 틀리면 바로 오답 처리 (0점)
+            showResult(userPinyin, 0, `❌ 발음 오독! 목표: [${targetPinyin}] / 인식: [${userPinyin}]`, false);
         }
-
-        // 1.5초 후 자동 다음 문제 이동
-        setTimeout(() => {
-            if (isRecording) {
-                nextRandomWord();
-            }
-        }, 1500);
     }
 
     function showResult(userPinyinText, score, msg, isSuccess) {
         document.getElementById('userPinyinBox').innerText = userPinyinText;
         const userBox = document.getElementById('userResultBox');
-        userBox.className = score === 100 ? "compare-box user" : "compare-box wrong";
+        userBox.className = isSuccess ? "compare-box user" : "compare-box wrong";
         document.getElementById('scoreDisplay').innerText = `+${score}점`;
         document.getElementById('scoreDisplay').style.color = isSuccess ? '#27ae60' : '#e74c3c';
         document.getElementById('feedbackText').innerText = msg;
