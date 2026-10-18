@@ -11,10 +11,10 @@
         h1 { color: var(--main-color); margin-bottom: 5px; font-size: 24px; }
         .subtitle { color: #747d8c; font-size: 14px; margin-bottom: 10px; }
         
-        /* ⏱️ 게임 헤더 (타이머 & 점수) */
-        .game-header { display: flex; justify-content: space-between; background: #ffeaa7; border: 2px solid #fdcb6e; border-radius: 12px; padding: 10px 15px; font-size: 18px; font-weight: bold; color: #2d3436; margin-bottom: 15px; }
-        .timer-val { color: #d63031; }
-        .score-val { color: #0984e3; }
+        /* ⏱️ 상단 2분 타이머 및 점수판 메인 헤더 */
+        .game-header { display: flex; justify-content: space-between; align-items: center; background: #ffeaa7; border: 3px solid #fdcb6e; border-radius: 15px; padding: 12px 20px; font-size: 20px; font-weight: bold; color: #2d3436; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .timer-val { color: #d63031; font-size: 24px; }
+        .score-val { color: #0984e3; font-size: 24px; }
 
         .user-setup { display: flex; gap: 8px; margin-bottom: 15px; }
         input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
@@ -22,7 +22,6 @@
         /* 🎮 단어 낙하 게임 스테이지 */
         .game-stage { position: relative; width: 100%; height: 260px; background: #2d3436; border-radius: 15px; overflow: hidden; border: 3px solid #636e72; margin-bottom: 15px; }
         
-        /* 떨어지는 단어 카트 */
         .falling-card { position: absolute; left: 50%; transform: translateX(-50%); background: #ffffff; border: 3px solid #ff4757; border-radius: 12px; padding: 10px 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.1s linear; }
         .falling-card.hit { animation: popOut 0.4s forwards; border-color: #2ed573; background: #e8fae8; }
         .falling-hanzi { font-size: 36px; font-weight: bold; color: #2d3436; }
@@ -55,16 +54,16 @@
     <h1>🇨🇳 발음 배틀 킹</h1>
     <div class="subtitle">2분 스피드 단어 맞히기 게임</div>
 
+    <!-- ⏱️ 상단 2분 타이머 UI -->
     <div class="game-header">
-        <div>⏱️ 시간: <span class="timer-val" id="timerDisplay">02:00</span></div>
-        <div>🏆 점수: <span class="score-val" id="scoreDisplay">0점</span></div>
+        <div>⏱️ <span class="timer-val" id="timerDisplay">02:00</span></div>
+        <div>🏆 <span class="score-val" id="scoreDisplay">0점</span></div>
     </div>
 
     <div class="user-setup">
         <input type="text" id="studentName" placeholder="이름(학번)을 입력하세요" />
     </div>
 
-    <!-- 🎮 단어가 내려오는 게임 화면 -->
     <div class="game-stage" id="stage">
         <div class="falling-card" id="fallingCard" style="top: -150px;">
             <div class="falling-hanzi" id="displayHanzi">一月</div>
@@ -104,9 +103,7 @@
     const charPinyinMap = {
         "一": "Yī", "二": "Èr", "三": "Sān", "四": "Sì", "五": "Wǔ",
         "六": "Liù", "七": "Qī", "八": "Bā", "九": "Jiǔ", "十": "Shí",
-        "月": "yuè", "星": "Xīng", "期": "qī", "日": "rì",
-        "1": "Yī", "2": "Èr", "3": "Sān", "4": "Sì", "5": "Wǔ",
-        "6": "Liù", "7": "Qī", "8": "Bā", "9": "Jiǔ", "10": "Shí"
+        "月": "yuè", "星": "Xīng", "期": "qī", "日": "rì"
     };
 
     const pinyinMap = {
@@ -114,8 +111,7 @@
         "五月": "Wǔ yuè", "六月": "Liù yuè", "七月": "Qī yuè", "八月": "Bā yuè",
         "九月": "Jiǔ yuè", "十月": "Shí yuè", "十一月": "Shí yī yuè", "十二月": "Shí èr yuè",
         "星期一": "Xīngqī yī", "星期二": "Xīngqī èr", "星期三": "Xīngqī sān",
-        "星期四": "Xīngqī sì", "星期五": "Xīngqī wǔ", "星期六": "Xīngqī liù", "星期日": "Xīngqī rì",
-        "1月": "Yī yuè", "2月": "Èr yuè", "3月": "Sān yuè", "4月": "Sì yuè", "5月": "Wǔ yuè"
+        "星期四": "Xīngqī sì", "星期五": "Xīngqī wǔ", "星期六": "Xīngqī liù", "星期日": "Xīngqī rì"
     };
 
     const vocabulary = [
@@ -143,7 +139,7 @@
     let currentIdx = 0;
     let isGameRunning = false;
     let currentScore = 0;
-    let timeLeft = 120;
+    let timeLeft = 120; // 2분 (120초)
     let timerInterval = null;
     let fallInterval = null;
     let posY = -120;
@@ -175,7 +171,9 @@
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (SpeechRecognition) {
+    function initRecognition() {
+        if (!SpeechRecognition) return;
+        
         recognition = new SpeechRecognition();
         recognition.lang = 'zh-CN';
         recognition.continuous = false;
@@ -187,18 +185,24 @@
         };
 
         recognition.onerror = () => {
-            if (isGameRunning) setTimeout(() => { safeStartRec(); }, 300);
+            if (isGameRunning) setTimeout(() => { restartRecognition(); }, 150);
         };
 
         recognition.onend = () => {
-            if (isGameRunning) setTimeout(() => { safeStartRec(); }, 200);
+            if (isGameRunning) setTimeout(() => { restartRecognition(); }, 150);
         };
     }
 
-    function safeStartRec() {
+    function restartRecognition() {
         if (!isGameRunning) return;
-        try { recognition.start(); } catch(e) {}
+        try { if (recognition) recognition.abort(); } catch(e){}
+        try {
+            initRecognition();
+            recognition.start();
+        } catch(e){}
     }
+
+    initRecognition();
 
     function toggleGame() {
         const nameInput = document.getElementById('studentName').value.trim();
@@ -210,39 +214,44 @@
         if (!isGameRunning) {
             isGameRunning = true;
             currentScore = 0;
-            timeLeft = 120;
+            timeLeft = 120; // 2분 초기화
             document.getElementById('scoreDisplay').innerText = "0점";
             document.getElementById('recBtn').innerText = "🛑 게임 진행 중... (클릭 시 정지)";
             document.getElementById('recBtn').classList.add('recording');
             
             startTimer();
             spawnNewWord();
-            safeStartRec();
+            restartRecognition();
         } else {
             stopGame();
         }
     }
 
+    // 게임 및 문제 완전 정지
     function stopGame() {
         isGameRunning = false;
         clearInterval(timerInterval);
         clearInterval(fallInterval);
-        try { recognition.stop(); } catch(e){}
+        try { if(recognition) recognition.abort(); } catch(e){}
         
         document.getElementById('recBtn').innerText = "🎮 2분 게임 시작!";
         document.getElementById('recBtn').classList.remove('recording');
     }
 
+    // ⏱️ 2분 카운트다운 타이머
     function startTimer() {
         updateTimerDisplay();
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             timeLeft--;
             updateTimerDisplay();
+            
+            // 2분 경과 시 문제 낙하 및 게임 완전히 중단
             if (timeLeft <= 0) {
                 stopGame();
                 document.getElementById('timerDisplay').innerText = "00:00";
-                document.getElementById('feedbackText').innerText = "⏰ 시간 종료! 최종 순위를 확인하세요!";
+                document.getElementById('feedbackText').innerText = "⏰ 2분 제한시간 종료! 최종 랭킹을 확인해보세요!";
+                document.getElementById('feedbackText').style.color = "#d63031";
                 playFanfareAndClap();
             }
         }, 1000);
@@ -255,6 +264,8 @@
     }
 
     function spawnNewWord() {
+        if (!isGameRunning) return;
+        
         currentIdx = Math.floor(Math.random() * vocabulary.length);
         const item = vocabulary[currentIdx];
         
@@ -270,13 +281,11 @@
         card.style.top = posY + "px";
 
         clearInterval(fallInterval);
-        // 단어 내려오는 속도 제어
         fallInterval = setInterval(() => {
             if (!isGameRunning) return;
             posY += 2;
             card.style.top = posY + "px";
 
-            // 바닥에 도달하면 실패 처리 후 다음 단어
             if (posY > 180) {
                 document.getElementById('feedbackText').innerText = "💥 단어가 놓쳐 지나갔습니다!";
                 document.getElementById('feedbackText').style.color = "#e74c3c";
@@ -313,14 +322,14 @@
 
         document.getElementById('userPinyinBox').innerText = userPinyin;
 
-        // 발음 정답 판정 시
-        if (spokenHanzi === targetHanzi || targetClean === userClean || userPinyin === targetPinyin) {
+        const isWrongKAudio = userClean.includes("ki") || userClean.includes("ky") || spokenHanzi.toLowerCase().includes("ki");
+
+        if (!isWrongKAudio && (spokenHanzi === targetHanzi || targetClean === userClean)) {
             currentScore += 100;
             document.getElementById('scoreDisplay').innerText = `${currentScore}점`;
-            document.getElementById('feedbackText').innerText = "🎉 정답! 단어 파괴!";
+            document.getElementById('feedbackText').innerText = "🎉 정확한 발음! 정답!";
             document.getElementById('feedbackText').style.color = "#27ae60";
 
-            // 단어 파괴 애니메이션 실행 후 다음 단어 스폰
             const card = document.getElementById('fallingCard');
             card.classList.add('hit');
             clearInterval(fallInterval);
@@ -328,11 +337,15 @@
             updateRanking(currentScore);
 
             setTimeout(() => {
-                if (isGameRunning) spawnNewWord();
-            }, 400);
+                if (isGameRunning) {
+                    spawnNewWord();
+                    restartRecognition();
+                }
+            }, 300);
         } else {
-            document.getElementById('feedbackText').innerText = `❌ 오독! [${userPinyin}] 다시 발음해보세요!`;
+            document.getElementById('feedbackText').innerText = `❌ 오독! [${userPinyin}] 정확히 발음해보세요!`;
             document.getElementById('feedbackText').style.color = "#e74c3c";
+            restartRecognition();
         }
     }
 
