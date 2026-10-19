@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>서천 발음 배틀킹</title>
+    <!-- 한자 -> 병음 변환 라이브러리 추가 -->
+    <script src="https://unpkg.com/pinyin-pro"></script>
     <style>
         :root {
             --primary: #4a90e2;
@@ -310,7 +312,7 @@
         let timerInterval = null;
         let timeLeft = 60;
         let score = 0;
-        let isChecking = false; // 정답 처리 중 중복 방지
+        let isChecking = false;
 
         let rankings = [
             { name: "홍길동", score: 120 },
@@ -337,10 +339,16 @@
                     currentTranscript += event.results[i][0].transcript;
                 }
                 
-                const cleanSpeech = currentTranscript.replace(/\s+/g, '').toLowerCase();
-                if (cleanSpeech !== '') {
-                    document.getElementById('recognizedPinyin').innerText = currentTranscript;
-                    checkAnswer(cleanSpeech);
+                const cleanText = currentTranscript.trim();
+                if (cleanText !== '') {
+                    // ⚡ 인식된 한자 텍스트를 실시간 성조 병음으로 변환
+                    let convertedPinyin = cleanText;
+                    if (window.pinyinPro && window.pinyinPro.pinyin) {
+                        convertedPinyin = window.pinyinPro.pinyin(cleanText);
+                    }
+                    
+                    document.getElementById('recognizedPinyin').innerText = convertedPinyin;
+                    checkAnswer(cleanText);
                 }
             };
 
@@ -355,18 +363,17 @@
             };
         }
 
-        // 정답 검사 및 자동으로 다음 문제 전환
-        function checkAnswer(speech) {
+        function checkAnswer(recognizedText) {
             const currentWord = wordList[currentIndex];
-            const targetHanzi = currentWord.hanzi.replace(/\s+/g, '').toLowerCase();
+            const targetHanzi = currentWord.hanzi;
+            const cleanRecognized = recognizedText.replace(/\s+/g, '');
             
-            // 한자가 인식 음성에 포함되어 있는지 확인
-            if (speech.includes(targetHanzi)) {
+            // 한자 비교 및 정답 판정
+            if (cleanRecognized.includes(targetHanzi)) {
                 isChecking = true;
-                score += 20; // 20점 추가
+                score += 20;
                 document.getElementById('score').innerText = score;
 
-                // 정답 피드백 효과 (카드 초록색 반짝)
                 const card = document.getElementById('wordCard');
                 card.classList.add('correct');
 
@@ -374,7 +381,7 @@
                     card.classList.remove('correct');
                     nextWord();
                     isChecking = false;
-                }, 400); // 0.4초 후 다음 문제 전환
+                }, 400);
             }
         }
 
@@ -387,7 +394,6 @@
 
         function nextWord() {
             let nextIndex = Math.floor(Math.random() * wordList.length);
-            // 같은 문제가 연속으로 나오지 않도록 방지
             if (wordList.length > 1 && nextIndex === currentIndex) {
                 nextIndex = (currentIndex + 1) % wordList.length;
             }
