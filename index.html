@@ -61,8 +61,14 @@
             align-items: center;
         }
 
+        .score-box {
+            font-size: 1rem;
+            color: #d9480f;
+            font-weight: bold;
+        }
+
         .pin-input {
-            width: 120px;
+            width: 100px;
             text-align: center;
             padding: 5px;
             border: 1px solid #ccc;
@@ -76,6 +82,12 @@
             border-radius: 16px;
             padding: 25px 15px;
             margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+
+        .word-card.correct {
+            background-color: #d3f9d8;
+            border-color: #b2f2bb;
         }
 
         .hanzi {
@@ -210,8 +222,7 @@
         }
 
         .ranking-list {
-            list-style: none;
-            padding: 0;
+            padding-left: 20px;
             margin: 0;
             text-align: left;
             font-size: 0.9rem;
@@ -237,13 +248,14 @@
 
         <div class="timer-box">
             <span>⏱️ 남은 시간: <span id="timer">01:00</span></span>
+            <span class="score-box">점수: <span id="score">0</span>점</span>
             <input type="text" id="username" class="pin-input" placeholder="이름(학번)">
         </div>
 
-        <div class="word-card">
-            <h1 class="hanzi" id="hanzi">星期二</h1>
-            <p class="pinyin" id="pinyin">Xīngqī èr</p>
-            <p class="meaning" id="meaning">화요일</p>
+        <div class="word-card" id="wordCard">
+            <h1 class="hanzi" id="hanzi">星期一</h1>
+            <p class="pinyin" id="pinyin">Xīngqī yī</p>
+            <p class="meaning" id="meaning">월요일</p>
         </div>
 
         <div class="btn-group">
@@ -258,7 +270,7 @@
             <div class="feedback-grid">
                 <div class="feedback-item">
                     <span class="feedback-label">목표 병음</span>
-                    <strong id="targetPinyin">Xīngqī èr</strong>
+                    <strong id="targetPinyin">Xīngqī yī</strong>
                 </div>
                 <div class="feedback-item">
                     <span class="feedback-label">인식된 병음</span>
@@ -273,24 +285,24 @@
                 <button class="btn-award" onclick="triggerConfetti()">🎉 팡파레 시상</button>
             </div>
             <ol class="ranking-list" id="rankingList">
-                <li class="ranking-item"><span>1. -</span><strong>0점</strong></li>
-                <li class="ranking-item"><span>2. -</span><strong>0점</strong></li>
-                <li class="ranking-item"><span>3. -</span><strong>0점</strong></li>
-                <li class="ranking-item"><span>4. -</span><strong>0점</strong></li>
-                <li class="ranking-item"><span>5. -</span><strong>0점</strong></li>
+                <li class="ranking-item"><span>홍길동</span><strong>120점</strong></li>
+                <li class="ranking-item"><span>김철수</span><strong>100점</strong></li>
+                <li class="ranking-item"><span>이영희</span><strong>80점</strong></li>
+                <li class="ranking-item"><span>박민수</span><strong>60점</strong></li>
+                <li class="ranking-item"><span>최지우</span><strong>40점</strong></li>
             </ol>
         </div>
     </div>
 
     <script>
         const wordList = [
-            { hanzi: "一月", pinyin: "Yī yuè", meaning: "1월" },
-            { hanzi: "二月", pinyin: "Èr yuè", meaning: "2월" },
             { hanzi: "星期一", pinyin: "Xīngqī yī", meaning: "월요일" },
             { hanzi: "星期二", pinyin: "Xīngqī èr", meaning: "화요일" },
             { hanzi: "星期三", pinyin: "Xīngqī sān", meaning: "수요일" },
             { hanzi: "星期四", pinyin: "Xīngqī sì", meaning: "목요일" },
-            { hanzi: "星期五", pinyin: "Xīngqī wǔ", meaning: "금요일" }
+            { hanzi: "星期五", pinyin: "Xīngqī wǔ", meaning: "금요일" },
+            { hanzi: "星期六", pinyin: "Xīngqī liù", meaning: "토요일" },
+            { hanzi: "星期日", pinyin: "Xīngqī rì", meaning: "일요일" }
         ];
 
         let currentIndex = 0;
@@ -298,8 +310,8 @@
         let timerInterval = null;
         let timeLeft = 60;
         let score = 0;
+        let isChecking = false; // 정답 처리 중 중복 방지
 
-        // 샘플 랭킹 데이터
         let rankings = [
             { name: "홍길동", score: 120 },
             { name: "김철수", score: 100 },
@@ -314,18 +326,56 @@
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'zh-CN';
-            recognition.continuous = false;
+            recognition.continuous = true;
+            recognition.interimResults = true;
 
             recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById('recognizedPinyin').innerText = transcript;
+                if (!isPlaying || isChecking) return;
+
+                let currentTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    currentTranscript += event.results[i][0].transcript;
+                }
+                
+                const cleanSpeech = currentTranscript.replace(/\s+/g, '').toLowerCase();
+                if (cleanSpeech !== '') {
+                    document.getElementById('recognizedPinyin').innerText = currentTranscript;
+                    checkAnswer(cleanSpeech);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error("음성 인식 오류:", event.error);
             };
 
             recognition.onend = () => {
                 if (isPlaying && timeLeft > 0) {
-                    recognition.start();
+                    try { recognition.start(); } catch(e) {}
                 }
             };
+        }
+
+        // 정답 검사 및 자동으로 다음 문제 전환
+        function checkAnswer(speech) {
+            const currentWord = wordList[currentIndex];
+            const targetHanzi = currentWord.hanzi.replace(/\s+/g, '').toLowerCase();
+            
+            // 한자가 인식 음성에 포함되어 있는지 확인
+            if (speech.includes(targetHanzi)) {
+                isChecking = true;
+                score += 20; // 20점 추가
+                document.getElementById('score').innerText = score;
+
+                // 정답 피드백 효과 (카드 초록색 반짝)
+                const card = document.getElementById('wordCard');
+                card.classList.add('correct');
+
+                setTimeout(() => {
+                    card.classList.remove('correct');
+                    nextWord();
+                    isChecking = false;
+                }, 400); // 0.4초 후 다음 문제 전환
+            }
         }
 
         function playAudio() {
@@ -336,7 +386,13 @@
         }
 
         function nextWord() {
-            currentIndex = Math.floor(Math.random() * wordList.length);
+            let nextIndex = Math.floor(Math.random() * wordList.length);
+            // 같은 문제가 연속으로 나오지 않도록 방지
+            if (wordList.length > 1 && nextIndex === currentIndex) {
+                nextIndex = (currentIndex + 1) % wordList.length;
+            }
+            currentIndex = nextIndex;
+
             const word = wordList[currentIndex];
             document.getElementById('hanzi').innerText = word.hanzi;
             document.getElementById('pinyin').innerText = word.pinyin;
@@ -352,10 +408,15 @@
                 isPlaying = true;
                 timeLeft = 60;
                 score = 0;
+                document.getElementById('score').innerText = score;
                 startBtn.innerText = "⏹️ 도전 중단";
                 startBtn.style.backgroundColor = "#e03131";
                 
-                if (recognition) recognition.start();
+                nextWord();
+
+                if (recognition) {
+                    try { recognition.start(); } catch(e) {}
+                }
                 
                 timerInterval = setInterval(() => {
                     timeLeft--;
@@ -381,7 +442,7 @@
 
             const nameInput = document.getElementById('username').value.trim() || '익명';
             addScoreToRanking(nameInput, score);
-            alert(`시간이 종료되었습니다! 최종 점수: ${score}점`);
+            alert(`⏰ 시간이 종료되었습니다!\n최종 점수: ${score}점`);
         }
 
         function updateTimerDisplay() {
@@ -390,33 +451,29 @@
             document.getElementById('timer').innerText = `${minutes}:${seconds}`;
         }
 
-        // 점수 랭킹 반영 (상위 5명만 보이기)
         function addScoreToRanking(name, newScore) {
             rankings.push({ name: name, score: newScore });
             rankings.sort((a, b) => b.score - a.score);
             updateRankingDisplay();
         }
 
-        // 상위 5명 랭킹 화면 출력
         function updateRankingDisplay() {
             const rankingListEl = document.getElementById('rankingList');
             rankingListEl.innerHTML = '';
 
-            // slice(0, 5)를 통해 상위 5명만 잘라서 표시
             const top5 = rankings.slice(0, 5);
 
-            top5.forEach((rank, index) => {
+            top5.forEach((rank) => {
                 const li = document.createElement('li');
                 li.className = 'ranking-item';
-                li.innerHTML = `<span>${index + 1}. ${rank.name}</span><strong>${rank.score}점</strong>`;
+                li.innerHTML = `<span>${rank.name}</span><strong>${rank.score}점</strong>`;
                 rankingListEl.appendChild(li);
             });
 
-            // 데이터가 5개 미만일 경우 빈 자리 채우기
             for (let i = top5.length; i < 5; i++) {
                 const li = document.createElement('li');
                 li.className = 'ranking-item';
-                li.innerHTML = `<span>${i + 1}. -</span><strong>0점</strong>`;
+                li.innerHTML = `<span>-</span><strong>0점</strong>`;
                 rankingListEl.appendChild(li);
             }
         }
@@ -425,7 +482,6 @@
             alert("🎉 축하합니다!");
         }
 
-        // 초기 화면 랭킹 출력
         updateRankingDisplay();
     </script>
 </body>
