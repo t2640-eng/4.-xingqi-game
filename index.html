@@ -3,406 +3,391 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇨🇳 중국어 한어병음 발음 배틀</title>
+    <title>서천 발음 배틀킹</title>
     <style>
-        :root { --main-color: #ff4757; --bg-color: #f1f2f6; }
-        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .container { background: white; width: 100%; max-width: 480px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: var(--main-color); margin-bottom: 5px; font-size: 24px; }
-        .subtitle { color: #747d8c; font-size: 14px; margin-bottom: 15px; }
+        :root {
+            --primary: #4a90e2;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --accent: #ff6b6b;
+        }
 
-        /* ⏱️ 상단 1분 30초 타이머 박스 */
-        .timer-box { background: #ffeaa7; border: 2px solid #fdcb6e; border-radius: 12px; padding: 10px; font-size: 20px; font-weight: bold; color: #d63031; margin-bottom: 15px; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-        .user-setup { display: flex; gap: 8px; margin-bottom: 15px; }
-        input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
-        
-        .card { background: #fff0f1; border: 2px solid #ffccd0; border-radius: 15px; padding: 20px; margin-bottom: 15px; }
-        .word-hanzi { font-size: 44px; font-weight: bold; color: #2f3542; margin-bottom: 5px; }
-        .word-pinyin { font-size: 22px; color: #ff4757; font-weight: bold; }
-        .word-meaning { font-size: 16px; color: #a4b0be; margin-top: 5px; }
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            text-align: center;
+        }
 
-        .btn-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
-        button { border: none; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-listen { background-color: #70a1ff; color: white; }
-        .btn-next { background-color: #a4b0be; color: white; }
-        
-        .btn-rec { background-color: var(--main-color); color: white; width: 100%; font-size: 18px; padding: 15px; border-radius: 10px; }
-        .btn-rec.recording { background-color: #2ed573; animation: blink 1s infinite; }
+        .title {
+            color: var(--accent);
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+        }
 
-        .feedback-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: left; }
-        .feedback-title { font-size: 14px; font-weight: bold; color: #475569; margin-bottom: 10px; text-align: center; }
-        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
-        .compare-box { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
-        .compare-box.user { background: #f0fdf4; border-color: #86efac; }
-        .compare-box.wrong { background: #fef2f2; border-color: #fca5a5; }
-        .compare-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
-        .compare-val { font-size: 20px; font-weight: bold; color: #0f172a; word-break: break-all; }
-        .score-badge { font-size: 22px; font-weight: bold; text-align: center; margin-top: 10px; }
-        .feedback-msg { font-size: 13px; text-align: center; margin-top: 5px; font-weight: 500; }
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
 
-        .leaderboard { background: #ffffff; border: 1px solid #eccc68; border-radius: 12px; padding: 15px; text-align: left; }
-        .leaderboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .leaderboard h3 { margin: 0; color: #ffa502; font-size: 16px; }
-        .rank-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; }
-        .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #f1f2f6; font-size: 14px; }
-        .rank-item:nth-child(1) { font-weight: bold; color: #ffa502; background: #fffaf0; border-radius: 6px; }
+        .timer-box {
+            background-color: #fff3bf;
+            border: 1px solid #ffe066;
+            border-radius: 12px;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
 
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .pin-input {
+            width: 60px;
+            text-align: center;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .word-card {
+            background: #fff0f6;
+            border: 2px solid #ffdeeb;
+            border-radius: 16px;
+            padding: 25px 15px;
+            margin-bottom: 20px;
+        }
+
+        .hanzi {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+            color: #1c7ed6;
+        }
+
+        .pinyin {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin: 8px 0 4px 0;
+        }
+
+        .meaning {
+            color: #868e96;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-audio {
+            background-color: #74c0fc;
+            color: white;
+        }
+
+        .btn-next {
+            background-color: #adb5bd;
+            color: white;
+        }
+
+        .btn-start {
+            background-color: #ff6b6b;
+            color: white;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .feedback-box {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .feedback-title {
+            font-size: 0.85rem;
+            color: #495057;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .feedback-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .feedback-item {
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .feedback-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #868e96;
+            margin-bottom: 3px;
+        }
+
+        .ranking-box {
+            border: 1px solid #ffe066;
+            background-color: #fff9db;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .ranking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .ranking-title {
+            font-weight: bold;
+            color: #f59f00;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-award {
+            background-color: #fcc419;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .ranking-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px dashed #ffe066;
+        }
+
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>🇨🇳 발음 배틀 킹</h1>
-    <div class="subtitle">1분 30초 연속 발음 평가 모드</div>
+    <div class="container">
+        <h2 class="title">🏫 서천 발음 배틀킹</h2>
+        <p class="subtitle">1분 연속 발음 평가 모드</p>
 
-    <!-- ⏱️ 1분 30초 타이머 UI -->
-    <div class="timer-box" id="timerDisplay">⏱️ 남은 시간: 01:30</div>
+        <div class="timer-box">
+            <span>⏱️ 남은 시간: <span id="timer">01:00</span></span>
+            <input type="text" class="pin-input" placeholder="0000" maxlength="4">
+        </div>
 
-    <div class="user-setup">
-        <input type="text" id="studentName" placeholder="이름(학번)을 입력하세요" />
-    </div>
+        <div class="word-card">
+            <h1 class="hanzi" id="hanzi">星期二</h1>
+            <p class="pinyin" id="pinyin">Xīngqī èr</p>
+            <p class="meaning" id="meaning">화요일</p>
+        </div>
 
-    <div class="card">
-        <div class="word-hanzi" id="displayHanzi">一月</div>
-        <div class="word-pinyin" id="displayPinyin">Yī yuè</div>
-        <div class="word-meaning" id="displayMeaning">1월</div>
-    </div>
+        <div class="btn-group">
+            <button class="btn btn-audio" onclick="playAudio()">🔊 원어민 듣기</button>
+            <button class="btn btn-next" onclick="nextWord()">🎲 다른 문제</button>
+        </div>
 
-    <div class="btn-group">
-        <button class="btn-listen" id="listenBtn" onclick="playTTS()">🔊 원어민 듣기</button>
-        <button class="btn-next" onclick="nextRandomWord()">🎲 다른 문제</button>
-    </div>
+        <button class="btn btn-start" id="startBtn" onclick="toggleGame()">🎤 1분 도전 시작!</button>
 
-    <button id="recBtn" class="btn-rec" onclick="toggleRecord()">🎤 1분 30초 도전 시작!</button>
-
-    <div class="feedback-card">
-        <div class="feedback-title">🔍 한어병음(Pinyin) 비교 피드백</div>
-        <div class="compare-grid">
-            <div class="compare-box">
-                <div class="compare-label">목표 병음</div>
-                <div class="compare-val" id="targetPinyinBox">Yī yuè</div>
-            </div>
-            <div class="compare-box" id="userResultBox">
-                <div class="compare-label">인식된 병음</div>
-                <div class="compare-val" id="userPinyinBox">-</div>
+        <div class="feedback-box">
+            <div class="feedback-title">🔍 한어병음(Pinyin) 비교 피드백</div>
+            <div class="feedback-grid">
+                <div class="feedback-item">
+                    <span class="feedback-label">목표 병음</span>
+                    <strong id="targetPinyin">Xīngqī èr</strong>
+                </div>
+                <div class="feedback-item">
+                    <span class="feedback-label">인식된 병음</span>
+                    <strong id="recognizedPinyin">-</strong>
+                </div>
             </div>
         </div>
-        <div id="scoreDisplay" class="score-badge"></div>
-        <div id="feedbackText" class="feedback-msg"></div>
-    </div>
 
-    <div class="leaderboard">
-        <div class="leaderboard-header">
-            <h3>🏆 학급 실시간 랭킹</h3>
-            <button style="background:#ffa502; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" onclick="playFanfareAndClap()">🎉 팡파레 시상</button>
+        <div class="ranking-box">
+            <div class="ranking-header">
+                <span class="ranking-title">🏆 학급 실시간 랭킹</span>
+                <button class="btn-award" onclick="triggerConfetti()">🎉 팡파레 시상</button>
+            </div>
+            <ul class="ranking-list" id="rankingList">
+                <li class="ranking-item">
+                    <span>-</span>
+                    <strong>0점</strong>
+                </li>
+            </ul>
         </div>
-        <ul class="rank-list" id="rankList">
-            <li class="rank-item"><span>-</span><span>0점</span></li>
-        </ul>
     </div>
-</div>
 
-<script>
-    const charPinyinMap = {
-        "一": "Yī", "二": "Èr", "三": "Sān", "四": "Sì", "五": "Wǔ",
-        "六": "Liù", "七": "Qī", "八": "Bā", "九": "Jiǔ", "十": "Shí",
-        "月": "yuè", "星": "Xīng", "期": "qī", "日": "rì",
-        "1": "Yī", "2": "Èr", "3": "Sān", "4": "Sì", "5": "Wǔ",
-        "6": "Liù", "7": "Qī", "8": "Bā", "9": "Jiǔ", "10": "Shí"
-    };
-
-    const pinyinMap = {
-        "一月": "Yī yuè", "二月": "Èr yuè", "三月": "Sān yuè", "四月": "Sì yuè",
-        "五月": "Wǔ yuè", "六月": "Liù yuè", "七月": "Qī yuè", "八月": "Bā yuè",
-        "九月": "Jiǔ yuè", "十月": "Shí yuè", "十一月": "Shí yī yuè", "十二月": "Shí èr yuè",
-        "星期一": "Xīngqī yī", "星期二": "Xīngqī èr", "星期三": "Xīngqī sān",
-        "星期四": "Xīngqī sì", "星期五": "Xīngqī wǔ", "星期六": "Xīngqī liù", "星期日": "Xīngqī rì"
-    };
-
-    const vocabulary = [
-        { hanzi: "一月", pinyin: "Yī yuè", meaning: "1월" },
-        { hanzi: "二月", pinyin: "Èr yuè", meaning: "2월" },
-        { hanzi: "三月", pinyin: "Sān yuè", meaning: "3월" },
-        { hanzi: "四月", pinyin: "Sì yuè", meaning: "4월" },
-        { hanzi: "五月", pinyin: "Wǔ yuè", meaning: "5월" },
-        { hanzi: "六月", pinyin: "Liù yuè", meaning: "6월" },
-        { hanzi: "七月", pinyin: "Qī yuè", meaning: "7월" },
-        { hanzi: "八月", pinyin: "Bā yuè", meaning: "8월" },
-        { hanzi: "九月", pinyin: "Jiǔ yuè", meaning: "9월" },
-        { hanzi: "十月", pinyin: "Shí yuè", meaning: "10월" },
-        { hanzi: "十一月", pinyin: "Shí yī yuè", meaning: "11월" },
-        { hanzi: "十二月", pinyin: "Shí èr yuè", meaning: "12월" },
-        { hanzi: "星期一", pinyin: "Xīngqī yī", meaning: "월요일" },
-        { hanzi: "星期二", pinyin: "Xīngqī èr", meaning: "화요일" },
-        { hanzi: "星期三", pinyin: "Xīngqī sān", meaning: "수요일" },
-        { hanzi: "星期四", pinyin: "Xīngqī sì", meaning: "목요일" },
-        { hanzi: "星期五", pinyin: "Xīngqī wǔ", meaning: "금요일" },
-        { hanzi: "星期六", pinyin: "Xīngqī liù", meaning: "토요일" },
-        { hanzi: "星期日", pinyin: "Xīngqī rì", meaning: "일요일" }
-    ];
-
-    let currentIdx = 0;
-    let isAutoLoop = false;
-    let recognition;
-    let rankData = {};
-    let timeLeft = 90; // 1분 30초 (90초)
-    let timerInterval = null;
-
-    // 🔊 크롬 브라우저 오디오 재생 완벽 보정
-    function playTTS() {
-        if ('speechSynthesis' in window) {
-            try {
-                window.speechSynthesis.cancel(); // 이전 재생 중단
-                window.speechSynthesis.resume(); // 크롬 일시정지 상태 해제
-                
-                const text = vocabulary[currentIdx].hanzi;
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = 'zh-CN';
-                u.rate = 0.8;
-
-                const voices = window.speechSynthesis.getVoices();
-                const zhVoice = voices.find(v => v.lang.startsWith('zh') || v.lang.includes('CN'));
-                if (zhVoice) u.voice = zhVoice;
-
-                window.speechSynthesis.speak(u);
-            } catch(e) {}
-        }
-    }
-
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
-    }
-
-    function playFanfareAndClap() {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const notes = [
-            { f: 261.63, dur: 0.15, time: 0 },
-            { f: 329.63, dur: 0.15, time: 0.15 },
-            { f: 392.00, dur: 0.15, time: 0.30 },
-            { f: 523.25, dur: 0.60, time: 0.45 }
+    <script>
+        // 단어 데이터셋
+        const wordList = [
+            { hanzi: "星期一", pinyin: "Xīngqī yī", meaning: "월요일" },
+            { hanzi: "星期二", pinyin: "Xīngqī èr", meaning: "화요일" },
+            { hanzi: "星期三", pinyin: "Xīngqī sān", meaning: "수요일" },
+            { hanzi: "星期四", pinyin: "Xīngqī sì", meaning: "목요일" },
+            { hanzi: "星期五", pinyin: "Xīngqī wǔ", meaning: "금요일" },
+            { hanzi: "星期六", pinyin: "Xīngqī liù", meaning: "토요일" },
+            { hanzi: "星期日", pinyin: "Xīngqī rì", meaning: "일요일" }
         ];
 
-        notes.forEach(note => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.value = note.f;
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime + note.time);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + note.time + note.dur);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(audioCtx.currentTime + note.time);
-            osc.stop(audioCtx.currentTime + note.time + note.dur);
-        });
-    }
+        let currentIndex = 1;
+        let isPlaying = false;
+        let timerInterval = null;
+        let timeLeft = 60; // 1분(60초)으로 설정
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        // 음성 인식 설정 (Web Speech API)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
 
-    function initRecognition() {
-        if (!SpeechRecognition) return;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = false;
 
-        recognition = new SpeechRecognition();
-        recognition.lang = 'zh-CN';
-        recognition.continuous = false;
-        recognition.interimResults = false;
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('recognizedPinyin').innerText = transcript;
+            };
 
-        recognition.onresult = (event) => {
-            const rawSpoken = event.results[0][0].transcript.replace(/\s+/g, '');
-            evaluatePronunciation(rawSpoken);
-        };
+            recognition.onerror = (event) => {
+                console.error("음성 인식 오류:", event.error);
+            };
 
-        recognition.onerror = () => {
-            if (isAutoLoop) setTimeout(() => { safeStartRecognition(); }, 400);
-        };
-
-        recognition.onend = () => { 
-            if (isAutoLoop) setTimeout(() => { safeStartRecognition(); }, 300);
-            else stopRecordUI();
-        };
-    }
-
-    function safeStartRecognition() {
-        if (!isAutoLoop) return;
-        try {
-            if (!recognition) initRecognition();
-            recognition.start();
-            startListeningUI();
-        } catch(e) {
-            // 마이크가 이미 실행 중인 경우 초기화 후 재시작
-            try {
-                initRecognition();
-                recognition.start();
-                startListeningUI();
-            } catch(err) {}
+            recognition.onend = () => {
+                if (isPlaying && timeLeft > 0) {
+                    recognition.start(); // 게임 진행 중이면 계속 인식
+                }
+            };
         }
-    }
 
-    initRecognition();
+        function playAudio() {
+            const currentWord = wordList[currentIndex];
+            const utterance = new SpeechSynthesisUtterance(currentWord.hanzi);
+            utterance.lang = 'zh-CN';
+            window.speechSynthesis.speak(utterance);
+        }
 
-    function startTimer() {
-        timeLeft = 90;
-        updateTimerDisplay();
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            updateTimerDisplay();
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                finishChallenge();
+        function nextWord() {
+            currentIndex = Math.floor(Math.random() * wordList.length);
+            const word = wordList[currentIndex];
+            document.getElementById('hanzi').innerText = word.hanzi;
+            document.getElementById('pinyin').innerText = word.pinyin;
+            document.getElementById('meaning').innerText = word.meaning;
+            document.getElementById('targetPinyin').innerText = word.pinyin;
+            document.getElementById('recognizedPinyin').innerText = '-';
+        }
+
+        function toggleGame() {
+            const startBtn = document.getElementById('startBtn');
+
+            if (!isPlaying) {
+                // 게임 시작
+                isPlaying = true;
+                timeLeft = 60; // 60초 초기화
+                startBtn.innerText = "⏹️ 도전 중단";
+                startBtn.style.backgroundColor = "#e03131";
+                
+                if (recognition) recognition.start();
+                
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            } else {
+                // 게임 중단
+                endGame();
             }
-        }, 1000);
-    }
-
-    function updateTimerDisplay() {
-        const min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-        const sec = String(timeLeft % 60).padStart(2, '0');
-        document.getElementById('timerDisplay').innerText = `⏱️ 남은 시간: ${min}:${sec}`;
-    }
-
-    function finishChallenge() {
-        isAutoLoop = false;
-        try { recognition.stop(); } catch(e){}
-        stopRecordUI();
-        document.getElementById('timerDisplay').innerText = "⏰ 도전 종료! 수고하셨습니다.";
-        document.getElementById('feedbackText').innerText = "🎉 1분 30초 제한시간이 종료되었습니다! 최종 랭킹을 확인하세요.";
-        playFanfareAndClap();
-    }
-
-    function cleanStr(str) {
-        if (!str) return "";
-        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "");
-    }
-
-    function getPinyin(text) {
-        if (!text) return "-";
-        if (pinyinMap[text]) return pinyinMap[text];
-        let result = "";
-        for (let char of text) {
-            result += (charPinyinMap[char] || char) + " ";
-        }
-        return result.trim();
-    }
-
-    function renderWord() {
-        const item = vocabulary[currentIdx];
-        document.getElementById('displayHanzi').innerText = item.hanzi;
-        document.getElementById('displayPinyin').innerText = item.pinyin;
-        document.getElementById('displayMeaning').innerText = item.meaning;
-        document.getElementById('targetPinyinBox').innerText = item.pinyin;
-        document.getElementById('userPinyinBox').innerText = "-";
-        document.getElementById('userResultBox').className = "compare-box";
-        document.getElementById('scoreDisplay').innerText = '';
-        document.getElementById('feedbackText').innerText = '';
-    }
-
-    function nextRandomWord() {
-        currentIdx = Math.floor(Math.random() * vocabulary.length);
-        renderWord();
-    }
-
-    function toggleRecord() {
-        const nameInput = document.getElementById('studentName').value.trim();
-        if (!nameInput) {
-            alert("이름(학번)을 먼저 입력해주세요!");
-            return;
         }
 
-        if (!isAutoLoop) {
-            isAutoLoop = true;
-            startTimer();
-            safeStartRecognition();
-        } else {
-            isAutoLoop = false;
+        function endGame() {
+            isPlaying = false;
             clearInterval(timerInterval);
-            try { recognition.stop(); } catch(e){}
-            stopRecordUI();
-        }
-    }
-
-    function startListeningUI() {
-        const btn = document.getElementById('recBtn');
-        btn.innerText = "🛑 1분 30초 도전 중... (클릭 시 정지)";
-        btn.classList.add('recording');
-    }
-
-    function stopRecordUI() {
-        const btn = document.getElementById('recBtn');
-        btn.innerText = "🎤 1분 30초 도전 시작!";
-        btn.classList.remove('recording');
-    }
-
-    /* 💡 xingqi(키), si(씨), ri(리) 발음 오독 감지 로직 */
-    function evaluatePronunciation(spokenHanzi) {
-        const targetItem = vocabulary[currentIdx];
-        const targetHanzi = targetItem.hanzi;
-        const targetPinyin = targetItem.pinyin;
-        
-        const userPinyin = getPinyin(spokenHanzi);
-
-        const targetClean = cleanStr(targetPinyin);
-        const userClean = cleanStr(userPinyin);
-        const spokenLower = spokenHanzi.toLowerCase();
-
-        // 1. xingqi -> '싱키' 발음 감지 (ki, ky 소리)
-        const isWrongK = userClean.includes("ki") || userClean.includes("ky") || spokenLower.includes("ki");
-        
-        // 2. si -> '씨/시' 발음 감지 (xi, ci 음성 감지)
-        const isTargetSi = targetClean.includes("si");
-        const isWrongSi = isTargetSi && (userClean.includes("xi") || spokenLower.includes("xi") || spokenLower.includes("ci"));
-
-        // 3. ri -> '리' 발음 감지 (li 소리)
-        const isTargetRi = targetClean.includes("ri");
-        const isWrongR = isTargetRi && (userClean.includes("li") || spokenLower.includes("li"));
-
-        if (isWrongK) {
-            showResult(userPinyin, 0, "❌ 오독! [xingqi]는 '싱키'가 아닌 '싱치'로 발음해야 합니다.", false);
-        } else if (isWrongSi) {
-            showResult(userPinyin, 0, "❌ 오독! [sì]는 '씨'가 아닌 '쓰'에 가깝게 발음해야 합니다.", false);
-        } else if (isWrongR) {
-            showResult(userPinyin, 0, "❌ 오독! [rì]는 '리'가 아닌 혀를 말아서 발음해야 합니다.", false);
-        } else if (spokenHanzi === targetHanzi || targetClean === userClean) {
-            showResult(userPinyin, 100, "🎉 완벽합니다! 1.5초 후 다음 문제로 이동합니다.", true);
-        } else if (targetClean.includes(userClean) || userClean.includes(targetClean)) {
-            showResult(userPinyin, 70, `⚠️ 비슷함! [${userPinyin}] 1.5초 후 다음 문제로 이동합니다.`, true);
-        } else {
-            showResult(userPinyin, 0, `❌ 발음 오독! [${userPinyin}] 1.5초 후 다음 문제로 이동합니다.`, false);
+            if (recognition) recognition.stop();
+            
+            const startBtn = document.getElementById('startBtn');
+            startBtn.innerText = "🎤 1분 도전 시작!";
+            startBtn.style.backgroundColor = "#ff6b6b";
+            alert("시간이 종료되었습니다!");
         }
 
-        setTimeout(() => {
-            if (isAutoLoop) {
-                nextRandomWord();
-            }
-        }, 1500);
-    }
+        function updateTimerDisplay() {
+            const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+            const seconds = String(timeLeft % 60).padStart(2, '0');
+            document.getElementById('timer').innerText = `${minutes}:${seconds}`;
+        }
 
-    function showResult(userPinyinText, score, msg, isSuccess) {
-        document.getElementById('userPinyinBox').innerText = userPinyinText;
-        const userBox = document.getElementById('userResultBox');
-        userBox.className = isSuccess ? "compare-box user" : "compare-box wrong";
-        document.getElementById('scoreDisplay').innerText = `+${score}점`;
-        document.getElementById('scoreDisplay').style.color = isSuccess ? '#27ae60' : '#e74c3c';
-        document.getElementById('feedbackText').innerText = msg;
-        if (score > 0) updateRanking(score);
-    }
-
-    function updateRanking(score) {
-        const name = document.getElementById('studentName').value.trim();
-        if (!rankData[name]) rankData[name] = 0;
-        rankData[name] += score;
-        const sorted = Object.entries(rankData).sort((a, b) => b[1] - a[1]);
-        const listEl = document.getElementById('rankList');
-        listEl.innerHTML = '';
-        sorted.forEach(([student, pts], idx) => {
-            const li = document.createElement('li');
-            li.className = 'rank-item';
-            li.innerHTML = `<span>${idx + 1}위. ${student}</span><span>${pts}점</span>`;
-            listEl.appendChild(li);
-        });
-    }
-
-    renderWord();
-</script>
+        function triggerConfetti() {
+            alert("🎉 축하합니다!");
+        }
+    </script>
 </body>
 </html>
