@@ -52,18 +52,17 @@
             background-color: #fff3bf;
             border: 1px solid #ffe066;
             border-radius: 12px;
-            padding: 10px;
+            padding: 10px 20px;
             font-weight: bold;
             font-size: 1.1rem;
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 20px;
         }
 
         .pin-input {
-            width: 60px;
+            width: 120px;
             text-align: center;
             padding: 5px;
             border: 1px solid #ccc;
@@ -238,7 +237,7 @@
 
         <div class="timer-box">
             <span>⏱️ 남은 시간: <span id="timer">01:00</span></span>
-            <input type="text" class="pin-input" placeholder="0000" maxlength="4">
+            <input type="text" id="username" class="pin-input" placeholder="이름(학번)">
         </div>
 
         <div class="word-card">
@@ -270,36 +269,45 @@
 
         <div class="ranking-box">
             <div class="ranking-header">
-                <span class="ranking-title">🏆 학급 실시간 랭킹</span>
+                <span class="ranking-title">🏆 학급 실시간 랭킹 (Top 5)</span>
                 <button class="btn-award" onclick="triggerConfetti()">🎉 팡파레 시상</button>
             </div>
-            <ul class="ranking-list" id="rankingList">
-                <li class="ranking-item">
-                    <span>-</span>
-                    <strong>0점</strong>
-                </li>
-            </ul>
+            <ol class="ranking-list" id="rankingList">
+                <li class="ranking-item"><span>1. -</span><strong>0점</strong></li>
+                <li class="ranking-item"><span>2. -</span><strong>0점</strong></li>
+                <li class="ranking-item"><span>3. -</span><strong>0점</strong></li>
+                <li class="ranking-item"><span>4. -</span><strong>0점</strong></li>
+                <li class="ranking-item"><span>5. -</span><strong>0점</strong></li>
+            </ol>
         </div>
     </div>
 
     <script>
-        // 단어 데이터셋
         const wordList = [
+            { hanzi: "一月", pinyin: "Yī yuè", meaning: "1월" },
+            { hanzi: "二月", pinyin: "Èr yuè", meaning: "2월" },
             { hanzi: "星期一", pinyin: "Xīngqī yī", meaning: "월요일" },
             { hanzi: "星期二", pinyin: "Xīngqī èr", meaning: "화요일" },
             { hanzi: "星期三", pinyin: "Xīngqī sān", meaning: "수요일" },
             { hanzi: "星期四", pinyin: "Xīngqī sì", meaning: "목요일" },
-            { hanzi: "星期五", pinyin: "Xīngqī wǔ", meaning: "금요일" },
-            { hanzi: "星期六", pinyin: "Xīngqī liù", meaning: "토요일" },
-            { hanzi: "星期日", pinyin: "Xīngqī rì", meaning: "일요일" }
+            { hanzi: "星期五", pinyin: "Xīngqī wǔ", meaning: "금요일" }
         ];
 
-        let currentIndex = 1;
+        let currentIndex = 0;
         let isPlaying = false;
         let timerInterval = null;
-        let timeLeft = 60; // 1분(60초)으로 설정
+        let timeLeft = 60;
+        let score = 0;
 
-        // 음성 인식 설정 (Web Speech API)
+        // 샘플 랭킹 데이터
+        let rankings = [
+            { name: "홍길동", score: 120 },
+            { name: "김철수", score: 100 },
+            { name: "이영희", score: 80 },
+            { name: "박민수", score: 60 },
+            { name: "최지우", score: 40 }
+        ];
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
 
@@ -307,20 +315,15 @@
             recognition = new SpeechRecognition();
             recognition.lang = 'zh-CN';
             recognition.continuous = false;
-            recognition.interimResults = false;
 
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
                 document.getElementById('recognizedPinyin').innerText = transcript;
             };
 
-            recognition.onerror = (event) => {
-                console.error("음성 인식 오류:", event.error);
-            };
-
             recognition.onend = () => {
                 if (isPlaying && timeLeft > 0) {
-                    recognition.start(); // 게임 진행 중이면 계속 인식
+                    recognition.start();
                 }
             };
         }
@@ -346,9 +349,9 @@
             const startBtn = document.getElementById('startBtn');
 
             if (!isPlaying) {
-                // 게임 시작
                 isPlaying = true;
-                timeLeft = 60; // 60초 초기화
+                timeLeft = 60;
+                score = 0;
                 startBtn.innerText = "⏹️ 도전 중단";
                 startBtn.style.backgroundColor = "#e03131";
                 
@@ -363,7 +366,6 @@
                     }
                 }, 1000);
             } else {
-                // 게임 중단
                 endGame();
             }
         }
@@ -376,7 +378,10 @@
             const startBtn = document.getElementById('startBtn');
             startBtn.innerText = "🎤 1분 도전 시작!";
             startBtn.style.backgroundColor = "#ff6b6b";
-            alert("시간이 종료되었습니다!");
+
+            const nameInput = document.getElementById('username').value.trim() || '익명';
+            addScoreToRanking(nameInput, score);
+            alert(`시간이 종료되었습니다! 최종 점수: ${score}점`);
         }
 
         function updateTimerDisplay() {
@@ -385,9 +390,43 @@
             document.getElementById('timer').innerText = `${minutes}:${seconds}`;
         }
 
+        // 점수 랭킹 반영 (상위 5명만 보이기)
+        function addScoreToRanking(name, newScore) {
+            rankings.push({ name: name, score: newScore });
+            rankings.sort((a, b) => b.score - a.score);
+            updateRankingDisplay();
+        }
+
+        // 상위 5명 랭킹 화면 출력
+        function updateRankingDisplay() {
+            const rankingListEl = document.getElementById('rankingList');
+            rankingListEl.innerHTML = '';
+
+            // slice(0, 5)를 통해 상위 5명만 잘라서 표시
+            const top5 = rankings.slice(0, 5);
+
+            top5.forEach((rank, index) => {
+                const li = document.createElement('li');
+                li.className = 'ranking-item';
+                li.innerHTML = `<span>${index + 1}. ${rank.name}</span><strong>${rank.score}점</strong>`;
+                rankingListEl.appendChild(li);
+            });
+
+            // 데이터가 5개 미만일 경우 빈 자리 채우기
+            for (let i = top5.length; i < 5; i++) {
+                const li = document.createElement('li');
+                li.className = 'ranking-item';
+                li.innerHTML = `<span>${i + 1}. -</span><strong>0점</strong>`;
+                rankingListEl.appendChild(li);
+            }
+        }
+
         function triggerConfetti() {
             alert("🎉 축하합니다!");
         }
+
+        // 초기 화면 랭킹 출력
+        updateRankingDisplay();
     </script>
 </body>
 </html>
